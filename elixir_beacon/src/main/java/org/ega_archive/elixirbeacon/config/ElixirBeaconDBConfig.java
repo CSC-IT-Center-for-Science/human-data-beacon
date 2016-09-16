@@ -15,8 +15,9 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-@Configuration
-@EnableJpaRepositories(basePackages = "org.ega_archive.elixirbeacon.repository.elixirbeacon",
+//exclude = "org.ega_archive.elixirbeacon.repository.elixirbeacon",
+/*@Configuration
+@EnableJpaRepositories(
     entityManagerFactoryRef = "elixirbeaconEntityManagerFactory",
     transactionManagerRef = "elixirbeaconTransactionManager",
     repositoryFactoryBeanClass = CustomQuerydslJpaRepositoryFactoryBean.class)
@@ -35,7 +36,7 @@ public class ElixirBeaconDBConfig {
     vendorAdapter.setGenerateDdl(false);
 
     LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
-    factory.setPackagesToScan("org.ega_archive.elixirbeacon.model.elixirbeacon");
+    //factory.setPackagesToScan("org.ega_archive.elixirbeacon.model.elixirbeacon");
     factory.setDataSource(elixirbeaconDataSource());
     factory.setJpaVendorAdapter(vendorAdapter);
     factory.setPersistenceUnitName("elixirbeacon");
@@ -53,4 +54,4 @@ public class ElixirBeaconDBConfig {
     return transactionManager;
   }
 
-}
+} */

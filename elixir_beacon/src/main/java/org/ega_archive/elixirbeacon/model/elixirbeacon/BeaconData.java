@@ -15,13 +15,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name="beacon_data")
-@NamedQuery(name="BeaconData.findAll", query="SELECT e FROM BeaconData e")
+//@Table(name="beacon_data")
+//@NamedQuery(name="BeaconData.findAll", query="SELECT e FROM BeaconData e")
 public class BeaconData implements Serializable {
 	private static final long serialVersionUID = 1L;
 
     @EmbeddedId
-    private BeaconDataPK id;
+    public BeaconDataPK id;
 
 	public BeaconData() {
 	}

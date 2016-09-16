@@ -25,6 +25,7 @@ import org.ega_archive.elixircore.enums.DatasetAccessType;
 import org.ega_archive.elixircore.helper.CommonQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
@@ -32,6 +33,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.mysema.query.types.expr.BooleanExpression;
+import org.ega_archive.elixirbeacon.model.elixirbeacon.BeaconDataset;
+import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.ComponentScan;
 
 @Service
 public class ElixirBeaconServiceImpl implements ElixirBeaconService {
@@ -48,7 +52,7 @@ public class ElixirBeaconServiceImpl implements ElixirBeaconService {
   @Override
   public Beacon listDatasets(CommonQuery commonQuery, String referenceGenome) {
     
-    commonQuery.setSort(new Sort(new Order(Direction.ASC, "id")));
+    //commonQuery.setSort(new Sort(new Order(Direction.ASC, "id")));
     
     List<Dataset> convertedDatasets = new ArrayList<Dataset>();
 
@@ -58,7 +62,8 @@ public class ElixirBeaconServiceImpl implements ElixirBeaconService {
       allDatasets =
           beaconDatasetRepository.findByReferenceGenome(referenceGenome, commonQuery.getPageable());
     } else {
-      allDatasets = beaconDatasetRepository.findAll(commonQuery);
+      List<BeaconDataset> result = beaconDatasetRepository.findAll(); //commonQuery
+      allDatasets = new PageImpl<BeaconDataset>(result,commonQuery.getPageable(), result.size()); 
     }
 
     Integer size = 0;
@@ -78,7 +83,7 @@ public class ElixirBeaconServiceImpl implements ElixirBeaconService {
     Beacon response = new Beacon();
     response.setDatasets(convertedDatasets);
     response.setInfo(info);
-    response.setSampleAlleleRequests(getSampleAlleleRequests());
+    response.setSampleAlleleRequests(getSampleAlleleRequests()); 
     return response;
   }
 
@@ -226,47 +231,47 @@ public class ElixirBeaconServiceImpl implements ElixirBeaconService {
   }
 
   private boolean queryDatabase(List<String> datasetStableIds, String alternateBases,
-      String chromosome, Integer start, String referenceGenome, BeaconAlleleResponse result) {
+	      String chromosome, Integer start, String referenceGenome, BeaconAlleleResponse result) {
 
-    QBeaconData qBeacon = QBeaconData.beaconData;
-    BooleanExpression condition = qBeacon.id.chromosome.eq(chromosome);
-    condition = condition.and(qBeacon.id.position.eq(start));
-    if (StringUtils.isNotBlank(alternateBases)) {
-      condition = condition.and(qBeacon.id.alternateBases.eq(alternateBases));
-    }
-    referenceGenome = StringUtils.lowerCase(referenceGenome);
-    condition = condition.and(qBeacon.id.referenceGenome.eq(referenceGenome));
+	    QBeaconData qBeacon = QBeaconData.beaconData;
+	    BooleanExpression condition = qBeacon.id.chromosome.eq(chromosome);
+	    condition = condition.and(qBeacon.id.position.eq(start));
+	    if (StringUtils.isNotBlank(alternateBases)) {
+	      condition = condition.and(qBeacon.id.alternateBases.eq(alternateBases));
+	    }
+	    referenceGenome = StringUtils.lowerCase(referenceGenome);
+	    condition = condition.and(qBeacon.id.referenceGenome.eq(referenceGenome));
 
-    if (datasetStableIds == null || datasetStableIds.isEmpty()) {
-      List<String> authorizedDatasets = findAuthorizedDatasets(referenceGenome);
-      // Limit the query to only the authorized datasets
-      if (!result.getAlleleRequest().isIncludeDatasetResponses()) {
-        condition = condition.and(qBeacon.id.datasetId.in(authorizedDatasets));
-      }
-      datasetStableIds = authorizedDatasets;
-    }
+	    if (datasetStableIds == null || datasetStableIds.isEmpty()) {
+	      List<String> authorizedDatasets = findAuthorizedDatasets(referenceGenome);
+	      // Limit the query to only the authorized datasets
+	      if (!result.getAlleleRequest().isIncludeDatasetResponses()) {
+	        condition = condition.and(qBeacon.id.datasetId.in(authorizedDatasets));
+	      }
+	      datasetStableIds = authorizedDatasets;
+	    }
 
-    long numResults = 0L;
-    boolean globalExists = false;
+	    long numResults = 0L;
+	    boolean globalExists = false;
 
-    if (result.getAlleleRequest().isIncludeDatasetResponses() && datasetStableIds != null
-        && !datasetStableIds.isEmpty()) {
-      for (String datasetStableId : datasetStableIds) {
-        BooleanExpression datasetCondition =
-            condition.and(qBeacon.id.datasetId.eq(datasetStableId));
-        numResults = beaconDataRepository.count(datasetCondition);
-        DatasetAlleleResponse datasetResponse = new DatasetAlleleResponse();
-        datasetResponse.setDatasetId(datasetStableId);
-        datasetResponse.setExists(numResults > 0);
-        result.addDatasetAlleleResponse(datasetResponse);
-        globalExists |= numResults > 0;
-      }
-    } else {
-      numResults = beaconDataRepository.count(condition);
-      globalExists = numResults > 0;
-    }
-    return globalExists;
-  }
+	    if (result.getAlleleRequest().isIncludeDatasetResponses() && datasetStableIds != null
+	        && !datasetStableIds.isEmpty()) {
+	      for (String datasetStableId : datasetStableIds) {
+	        BooleanExpression datasetCondition =
+	            condition.and(qBeacon.id.datasetId.eq(datasetStableId));
+	        numResults = beaconDataRepository.count(datasetCondition);
+	        DatasetAlleleResponse datasetResponse = new DatasetAlleleResponse();
+	        datasetResponse.setDatasetId(datasetStableId);
+	        datasetResponse.setExists(numResults > 0);
+	        result.addDatasetAlleleResponse(datasetResponse);
+	        globalExists |= numResults > 0;
+	      }
+	    } else {
+	      numResults = beaconDataRepository.count(condition);
+	      globalExists = numResults > 0;
+	    }
+	    return globalExists;
+	  }
 
   private List<String> findAuthorizedDatasets(String referenceGenome) {
     List<String> publicDatasets =

@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.ComponentScan;
 
 @RestController
 @RequestMapping("/beacon")
+//@ComponentScan("org.ega_archive.elixirbeacon.service")
 public class ElixirBeaconController {
   
   @Autowired

@@ -5,22 +5,28 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
+
 @Configuration
 @ComponentScan({"${custom.package.scan:org.ega_archive.custom.elixirbeacon}", "org.ega_archive.elixirbeacon", "org.ega_archive.elixircore"})
 @EnableAutoConfiguration(exclude = {
     HibernateJpaAutoConfiguration.class,
-    MongoAutoConfiguration.class,
-    MongoDataAutoConfiguration.class,
-    MongoRepositoriesAutoConfiguration.class,
-    RabbitAutoConfiguration.class
+//    MongoAutoConfiguration.class,
+//    MongoDataAutoConfiguration.class,
+//    MongoRepositoriesAutoConfiguration.class,
+    RabbitAutoConfiguration.class,
+    DataSourceAutoConfiguration.class, 
+    DataSourceTransactionManagerAutoConfiguration.class, 
+    HibernateJpaAutoConfiguration.class
+
 })
 public class Application {
 
