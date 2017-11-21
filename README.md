@@ -1,45 +1,66 @@
-# Docker
-Docker image available at: https://hub.docker.com/r/egacrg/beacon/
+# How to light a Beacon in a minute (with Docker)
+Docker image of ELIXIR Beacon is available at [Docker Hub](https://hub.docker.com/r/egacrg/beacon/) and with this Beacon can be light simply with one command:
 
-It includes the Elixir Beacon application, already deployed and running, and a PostgreSQL database with some sample data.
-
-The JAR file is located at /tmp folder with the default configuration (for further information see section [Elixir Beacon, the main project](https://github.com/elixirhub/human-data-beacon#elixir-beacon-the-main-project)).
-
-The database used is called elixir_beacon_dev and the default user and password are microaccounts_dev and r783qjkldDsiu. If you change anything of this configuration you must also change it in the **application-dev.properties** file inside the JAR file (see section [Configuration files](https://github.com/elixirhub/human-data-beacon#configuration-files)). You only need to edit this properties file (no recompilation needed) and redeploy the application (see section [Deploy the JAR](https://github.com/elixirhub/human-data-beacon#deploy-the-jar)).
-
-To load your own data into the database, first remove sample data provided by default:
 ```
-docker attach the_identifier_of_the_image
-psql -h localhost -p 5432 -U microaccounts_dev -d elixir_beacon_dev
+$ docker run -dit -p 9075:9075 egacrg/beacon
+```
+
+This deploys the Beacon and initializes PostgreSQL database with some sample data. The Beacon can now be queried:
+
+```
+$ curl http://localhost:9075/elixirbeacon/v03/beacon/query?alternatebases=A&assemblyid=GRCh37&referencename=1&start
+=1000
+{
+  "beaconId" : "elixir-demo-beacon",
+  "exists" : false,
+  "error" : null,
+  "alleleRequest" : {
+    "alternateBases" : "A",
+    "referenceBases" : null,
+    "referenceName" : "1",
+    "start" : 1000,
+    "assemblyId" : "GRCh37",
+    "datasetIds" : null,
+    "includeDatasetResponses" : false
+  },
+  "datasetAlleleResponses" : null
+}                
+```
+
+To load your own data into the database you need first remove sample data provid
+ed by default:
+```
+$ docker attach the_<identifier_of_the_image>
+$ psql -h localhost -p 5432 -U microaccounts_dev -d elixir_beacon_dev
 ```
 ```sql
 TRUNCATE beacon_dataset_table;
 TRUNCATE beacon_data_table;
 ```
-And load your own data (see section [Load data](https://github.com/elixirhub/human-data-beacon#load-the-data)).
 
-To detach from the docker container press <code>Ctrl + p + q</code>.
+And then load your own data as instructed in section [Load data](https://github.com/elixirhub/human-data-beacon#load-the-data).
 
-# Docker UI
-There is a docker image with the Beacon user interface impementation available at: https://github.com/elixir-europe/human-data-beacon-ui
+There is also a Docker image for the Beacon user interface implementation available at: https://github.com/elixir-europe/human-data-beacon-ui
 
-# Requirements
+# How to install
+
+## Requirements
 * Java 8 JDK
 * Apache Maven 3
 * PostgreSQL Server 9.0+, or any other SQL server (i. e. MySQL)
 * JMeter
 
-# Quick start
-This quick start guide uses the default configuration and sets the application up using some sample data. It requires a Postgres server running in the local machine and listening to the default port 5432.
+## Installation 
+This guide uses the default configuration and sets the application up using some sample data. It requires a Postgres server running in the local machine and listening to the default port 5432.
 
 If you want to tune the configuration or load custom data, please, skip this section and keep reading.
 
 * Create 2 databases and a new user (use *r783qjkldDsiu* as password)
 ```
-createdb elixir_beacon_dev -U postgres
-createdb elixir_beacon_testing -U postgres
-createuser -P microaccounts_dev
-psql elixir_beacon_dev -U postgres
+$ createdb elixir_beacon_dev -U postgres
+$ createdb elixir_beacon_testing -U postgres
+$ createuser -P microaccounts_dev
+$ psql elixir_beacon_dev -U postgres
 ```
 ```sql
 GRANT ALL PRIVILEGES ON DATABASE elixir_beacon_dev TO microaccounts_dev;
@@ -47,38 +68,38 @@ GRANT ALL PRIVILEGES ON DATABASE elixir_beacon_testing TO microaccounts_dev;
 ```
 * Load the schema (download [elixir_beacon_db_schema.sql](https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql))
 ```
-wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql
+$ wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql
 psql -d elixir_beacon_dev -U microaccounts_dev < elixir_beacon_db_schema.sql
 psql -d elixir_beacon_testing -U microaccounts_dev < elixir_beacon_db_schema.sql
 ```
 * Load data (download [EGAD00000000028.SNPs](https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/EGAD00000000028.SNPs))
 ```
-psql -d elixir_beacon_dev -U microaccounts_dev
+$ psql -d elixir_beacon_dev -U microaccounts_dev
 ```
 ```sql
 INSERT INTO beacon_dataset(id, description, access_type, reference_genome, size)
   VALUES ('EGAD00000000028', 'Sample variants', 'PUBLIC', 'grch37', 34114);
 ```
 ```
-wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/EGAD00000000028.SNPs
+$ wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/EGAD00000000028.SNPs
 cat EGAD00000000028.SNPs | psql -U microaccounts_dev -c "COPY beacon_data_table(dataset_id,chromosome,position,alternate) FROM STDIN USING DELIMITERS ';' CSV" elixir_beacon_dev
 ```
 * Download the code
 ```
-git clone https://github.com/elixirhub/human-data-beacon.git
+$ git clone https://github.com/elixirhub/human-data-beacon.git
 ```
 * Prepare dependencies
 ```
-cd elixir_core
-mvn clean compile jar:jar
-mvn install
+$ cd elixir_core
+$ mvn clean compile jar:jar
+$ mvn install
 ```
 * Compile and deploy the application
 ```
-cd elixir_beacon
-mvn clean compile package -Dspring.profiles.active="dev"
-cd target
-java -jar elixir-beacon-0.3.jar --spring.profiles.active=dev
+$ cd elixir_beacon
+$ mvn clean compile package -Dspring.profiles.active="dev"
+$ cd target
+$ java -jar elixir-beacon-0.3.jar --spring.profiles.active=dev
 ```
 * Go to 
   * [localhost:9075/elixirbeacon/v03/beacon/](http://localhost:9075/elixirbeacon/v03/beacon/)
@@ -90,8 +111,8 @@ java -jar elixir-beacon-0.3.jar --spring.profiles.active=dev
     * **elixir_beacon_dev**: this is the main database that will be used by the application.
     * **elixir_beacon_testing**: this is a secondary database that will be used to run the tests.
 ```
-createdb elixir_beacon_dev -h 127.0.0.1 -p 5432 -U postgres
-createdb elixir_beacon_testing -h 127.0.0.1 -p 5432 -U postgres
+$ createdb elixir_beacon_dev -h 127.0.0.1 -p 5432 -U postgres
+$ createdb elixir_beacon_testing -h 127.0.0.1 -p 5432 -U postgres
 ```
 NOTE: If you want to use a different name, user or your Postgres server is running in a different host or is listening to a different port, please, replace the values in the previous command.
 
@@ -103,13 +124,13 @@ NOTE: If you want to use a different name, user or your Postgres server is runni
 
 * Create a user that will be used by the application to connect to the databases just created:
 ```
-createuser -P microaccounts_dev
+$ createuser -P microaccounts_dev
 ```
 This command will prompt for the password of the new user.
 
 * Log in each of the databases and grant privileges to a normal user (that is, not a super user), i. e. the user just created in the previous step:
 ```
-psql elixir_beacon_dev -U postgres
+$ psql elixir_beacon_dev -U postgres
 ```
 ```sql
 GRANT ALL PRIVILEGES ON DATABASE elixir_beacon_dev TO microaccounts_dev;
@@ -120,15 +141,15 @@ NOTE: You can skip this step and load the schema using a super user in the next 
 
 * Download the schema [script](https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql) and run it in **both** databases: 
 ```
-wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql
-psql -h 127.0.0.1 -p 5432 -d elixir_beacon_dev -U microaccounts_dev < elixir_beacon_db_schema.sql
-psql -h 127.0.0.1 -p 5432 -d elixir_beacon_testing -U microaccounts_dev < elixir_beacon_db_schema.sql
+$ wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/elixir_beacon_db_schema.sql
+$ psql -h 127.0.0.1 -p 5432 -d elixir_beacon_dev -U microaccounts_dev < elixir_beacon_db_schema.sql
+$ psql -h 127.0.0.1 -p 5432 -d elixir_beacon_testing -U microaccounts_dev < elixir_beacon_db_schema.sql
 ```
 That script will create the schema and also load some essential data for data use conditions.
 
 If you use a super user to create the schema then you will need to grant access to the "normal" user that will be used by the application (that user we created in the second step):
 ```
-psql elixir_beacon_dev -U postgres
+$ psql elixir_beacon_dev -U postgres
 ```
 ```sql
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO microaccounts_dev;
@@ -139,12 +160,12 @@ Remember to run these lines in both databases.
 ## Load the data
 * Download the [script](https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/vcf_parser.sh) to parse VCF files and give it executable rights:
 ```
-wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/vcf_parser.sh
-chmod +x vcf_parser.sh
+$ wget https://raw.githubusercontent.com/elixirhub/human-data-beacon/master/elixir_beacon/src/main/resources/META-INF/vcf_parser.sh
+$ chmod +x vcf_parser.sh
 ```
 * Run this script executing:
 ```
-./vcf_parser.sh dataset_id < file.vcf
+$ ./vcf_parser.sh dataset_id < file.vcf
 ```
 This script will generate an output file called dataset_id.SNPs (i. e. EGAD00000000028.SNPs).
 It will also output the number of variants extracted from the VCF. This value is the "size" in the next step.
@@ -262,7 +283,7 @@ The <code>-P local</code> refers to a maven profile. These profiles can be found
 
 For other configurations please add a profile in pom.xml file. You will see the results on the console.
 
-# Using the application
+# Endpoints 
 The application publishes two endpoints:
 * /beacon/
 * /beacon/query
